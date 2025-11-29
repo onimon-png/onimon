@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Lore } from './components/Lore';
@@ -9,8 +10,9 @@ import { Footer } from './components/Footer';
 
 export default function App() {
   const [loading, setLoading] = useState(true);
-  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isHovering, setIsHovering] = useState(false);
+  
+  // PERFORMANCE FIX: Use refs instead of state for high-frequency updates
+  const cursorRef = useRef<HTMLDivElement>(null);
 
   // Intro Animation Timer
   useEffect(() => {
@@ -20,27 +22,40 @@ export default function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Custom Cursor Logic
+  // Optimized Custom Cursor Logic (No React Re-renders)
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setCursorPosition({ x: e.clientX, y: e.clientY });
-    };
+    // Only run on desktop
+    if (window.matchMedia("(max-width: 768px)").matches) return;
 
-    // Add hover listeners to interactive elements
-    const handleMouseOver = (e: MouseEvent) => {
-      if ((e.target as HTMLElement).closest('a, button, .interactive')) {
-        setIsHovering(true);
-      } else {
-        setIsHovering(false);
+    let mouseX = 0;
+    let mouseY = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      
+      // Direct DOM manipulation - ultra fast, no React render cycle
+      if (cursorRef.current) {
+         cursorRef.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseover', handleMouseOver);
+    const onMouseOver = (e: MouseEvent) => {
+      if (!cursorRef.current) return;
+      
+      if ((e.target as HTMLElement).closest('a, button, input, .interactive')) {
+        cursorRef.current.classList.add('hovered');
+      } else {
+        cursorRef.current.classList.remove('hovered');
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    window.addEventListener('mouseover', onMouseOver, { passive: true });
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseover', handleMouseOver);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseover', onMouseOver);
     };
   }, []);
 
@@ -52,6 +67,8 @@ export default function App() {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('active');
+          // Performance: Unobserve once revealed to save resources
+          observer.unobserve(entry.target);
         }
       });
     }, { threshold: 0.1 });
@@ -65,10 +82,12 @@ export default function App() {
   return (
     <div className="bg-oni-dark min-h-screen text-gray-100 font-sans relative selection:bg-oni-red selection:text-white">
       
-      {/* Custom Cursor Element */}
+      {/* Optimized Custom Cursor Element */}
       <div 
-        className={`custom-cursor ${isHovering ? 'hovered' : ''}`}
-        style={{ left: `${cursorPosition.x}px`, top: `${cursorPosition.y}px` }}
+        ref={cursorRef}
+        className="custom-cursor"
+        // Initial position off-screen
+        style={{ transform: 'translate3d(-100px, -100px, 0)' }}
       ></div>
 
       {/* Opening Animation Overlay */}
@@ -81,8 +100,8 @@ export default function App() {
         </div>
       </div>
 
-       {/* Background noise/grain overlay */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+       {/* Background noise - Optimized opacity to reduce compositing load */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-50 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] will-change-transform"></div>
       
       <div className={`transition-opacity duration-1000 ${loading ? 'opacity-0' : 'opacity-100'}`}>
         <Navbar />
