@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Lore } from './components/Lore';
+import { Summoning } from './components/Summoning';
 import { Manifesto } from './components/Manifesto';
 import { Gallery } from './components/Gallery';
 import { Footer } from './components/Footer';
@@ -88,8 +89,9 @@ export default function App() {
         <main>
           <Hero />
           <Lore />
-          <Manifesto />
+          <Summoning />
           <Gallery />
+          <Manifesto />
         </main>
         <Footer />
       </div>
