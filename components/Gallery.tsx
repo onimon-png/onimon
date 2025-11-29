@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const TOTAL_SUPPLY = 1212;
-const ITEMS_PER_PAGE = 12; // 12 items per page
+const ITEMS_PER_PAGE = 6; // Changed to 6 items per page
 const TOTAL_PAGES = Math.ceil(TOTAL_SUPPLY / ITEMS_PER_PAGE);
 
 // --- SMART CACHING COMPONENT ---
@@ -161,7 +161,7 @@ export const Gallery: React.FC = () => {
         </div>
 
         {/* The Wall of Souls Grid - Updated to use CachedOnimonCard */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 min-h-[600px] content-start">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 min-h-[400px] content-start">
             {displayedIds.map((id) => (
                 <CachedOnimonCard key={id} id={id} />
             ))}
